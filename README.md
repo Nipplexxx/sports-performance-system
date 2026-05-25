@@ -37,16 +37,29 @@
 - **Хостинг**: Firebase Hosting (опционально)
 
 ## Структура проекта
-
-```
-src/
-├── components/          # Модальные окна и переиспользуемые компоненты
-├── Dashboard.js         # Главный файл дашбордов
-├── Login.js             # Страница входа
-├── Register.js          # Страница регистрации
-├── firebase.js          # Конфигурация Firebase
-└── main.js              # Точка входа приложения
-```
+sports_performance/
+├── src/
+│   ├── components/                 # Переиспользуемые компоненты и модальные окна
+│   │   ├── AthleteProfileModal.js
+│   │   ├── EditTrainerSectionsModal.js
+│   │   ├── LoadApprovedAthletes.js
+│   │   ├── LoadPendingRequests.js
+│   │   ├── LoadTrainerAnnouncements.js
+│   │   ├── OpenAddIndicatorModal.js
+│   │   ├── ShowSectionSelectionModal.js
+│   │   └── TrainerAnnouncementsModal.js
+│   │
+│   ├── Dashboard.js                # Основной файл с дашбордами тренера и спортсмена
+│   ├── Login.js                    # Страница авторизации
+│   ├── Register.js                 # Страница регистрации
+│   ├── firebase.js                 # Конфигурация Firebase
+│   └── main.js                     # Точка входа приложения
+│
+├── index.html
+├── package.json
+├── vite.config.js
+└── firebase.json
+text
 
 ## Запуск проекта локально
 
