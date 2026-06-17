@@ -12,6 +12,7 @@ export function openTrainerAnnouncementsModal(trainerId) {
         <button id="close-btn" class="text-3xl leading-none text-slate-400 hover:text-white">&times;</button>
       </div>
 
+      <!-- Форма создания -->
       <div class="bg-slate-800 rounded-2xl p-6 mb-6">
         <h4 class="font-semibold mb-4">Новое объявление</h4>
         <form id="announcement-form" class="space-y-4">
@@ -21,7 +22,7 @@ export function openTrainerAnnouncementsModal(trainerId) {
             <div>
               <label class="text-sm text-slate-400">Для какой секции</label>
               <select id="section" class="w-full bg-slate-700 p-3 rounded-2xl">
-                <option value="all">Для всех маршрутов</option>
+                <option value="all">Для всех секций</option>
               </select>
             </div>
             <div>
@@ -38,6 +39,7 @@ export function openTrainerAnnouncementsModal(trainerId) {
         </form>
       </div>
 
+      <!-- Список объявлений -->
       <div>
         <h4 class="font-semibold mb-4">Мои объявления</h4>
         <div id="announcements-list" class="space-y-4"></div>
@@ -54,9 +56,13 @@ export function openTrainerAnnouncementsModal(trainerId) {
 
   closeBtn.onclick = () => modal.remove();
 
+  // Загружаем секции тренера в select
   loadTrainerSectionsForSelect(trainerId, sectionSelect);
+
+  // Загрузка существующих объявлений
   loadMyAnnouncements(trainerId, listContainer);
 
+  // Создание объявления
   form.onsubmit = async (e) => {
     e.preventDefault();
 
@@ -71,17 +77,18 @@ export function openTrainerAnnouncementsModal(trainerId) {
       trainerId,
       title,
       content,
-      section,
+      section,                    // "all" или название секции
       date,
       createdAt: Date.now()
     });
 
     form.reset();
     alert("Объявление опубликовано!");
-    loadMyAnnouncements(trainerId, listContainer);
+    loadMyAnnouncements(trainerId, listContainer); // обновляем список
   };
 }
 
+// Загрузка секций тренера в выпадающий список
 async function loadTrainerSectionsForSelect(trainerId, selectElement) {
   const userRef = ref(db, `users/${trainerId}`);
   const snapshot = await get(userRef);
@@ -95,6 +102,7 @@ async function loadTrainerSectionsForSelect(trainerId, selectElement) {
   });
 }
 
+// Загрузка объявлений тренера
 function loadMyAnnouncements(trainerId, container) {
   const announcementsRef = ref(db, "announcements");
 
@@ -121,7 +129,7 @@ function loadMyAnnouncements(trainerId, container) {
             <div class="flex gap-3 text-sm text-slate-400 mt-1">
               <span>${announcement.date}</span>
               <span>•</span>
-              <span>${announcement.section === "all" ? "Все маршруты" : announcement.section}</span>
+              <span>${announcement.section === "all" ? "Все секции" : announcement.section}</span>
             </div>
           </div>
           <button class="delete-btn text-red-400 hover:text-red-500 px-3">Удалить</button>

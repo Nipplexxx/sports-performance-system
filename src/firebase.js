@@ -4,6 +4,8 @@ import { getDatabase } from "firebase/database";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
+  // ВАЖНО ДЛЯ ДИПЛОМА: Создайте свой проект в Firebase и замените этот config на свой!
+  // https://console.firebase.google.com/
   apiKey: "AIzaSyBipC4xnN0W5w1y0nRzzm1mZ5YruwNCOXY",
   authDomain: "sports-performance-syste-45f43.firebaseapp.com",
   databaseURL: "https://sports-performance-syste-45f43-default-rtdb.europe-west1.firebasedatabase.app",

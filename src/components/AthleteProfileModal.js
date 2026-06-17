@@ -27,9 +27,12 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
   const isOwnProfile = auth.currentUser?.uid === athleteId;
   const role = userData.role || "driver";
 
+  // Определяем заголовок модалки
   let modalTitle = "Профиль водителя";
   if (isOwnProfile) {
     modalTitle = role === "dispatcher" ? "Профиль диспетчера" : "Мой профиль водителя";
+  } else {
+    modalTitle = "Профиль водителя";
   }
 
   const modal = document.createElement("div");
@@ -40,6 +43,7 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
       <h3 class="text-2xl font-semibold mb-6">${modalTitle}</h3>
 
       <form id="profile-form" class="space-y-4">
+        <!-- Аватар -->
         <div class="flex flex-col items-center mb-4">
           <div class="w-24 h-24 mb-3 rounded-full overflow-hidden border border-slate-700 bg-slate-800">
             <img id="avatar-preview" src="${profile.avatarUrl || 'https://via.placeholder.com/150?text=No+Photo'}" class="w-full h-full object-cover">
@@ -87,7 +91,7 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
         </div>
 
         <div>
-          <label class="text-sm text-slate-400">Медицинская информация / ограничения</label>
+          <label class="text-sm text-slate-400">Медицинская информация</label>
           <textarea id="medicalInfo" rows="3" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>${profile.medicalInfo}</textarea>
         </div>
 
@@ -110,6 +114,7 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
 
   let uploadedAvatarUrl = profile.avatarUrl;
 
+  // Загрузка фото (только владелец профиля)
   if (canEdit && fileInput && isOwnProfile) {
     fileInput.onchange = async (e) => {
       const file = e.target.files[0];
@@ -148,9 +153,11 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
         await update(dbRef(db, `users/${athleteId}`), updatedUser);
         await set(dbRef(db, `athleteProfiles/${athleteId}`), updatedProfile);
 
+        // Обновление email в Firebase Auth (только для владельца)
         if (isOwnProfile && auth.currentUser.email !== updatedUser.email) {
           try {
             await updateEmail(auth.currentUser, updatedUser.email);
+            alert("Email успешно изменён!");
           } catch (authError) {
             alert("Профиль сохранён. Для входа по новому email может потребоваться повторная авторизация.");
           }

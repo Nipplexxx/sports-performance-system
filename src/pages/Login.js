@@ -127,12 +127,14 @@ function showPhoneLoginModal(onLoginSuccess) {
   const closeBtn = modal.querySelector('#close-phone-modal');
   closeBtn.onclick = () => modal.remove();
 
+  // Инициализация reCAPTCHA (невидимая)
   if (!recaptchaVerifier) {
     recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       size: 'invisible',
     });
   }
 
+  // Отправка кода
   modal.querySelector('#send-code-btn').onclick = async () => {
     const phoneNumber = modal.querySelector('#phone-number').value.trim();
 
@@ -152,6 +154,7 @@ function showPhoneLoginModal(onLoginSuccess) {
     }
   };
 
+  // Подтверждение кода
   modal.querySelector('#verify-code-btn').onclick = async () => {
     const code = modal.querySelector('#verification-code').value.trim();
 
@@ -159,6 +162,7 @@ function showPhoneLoginModal(onLoginSuccess) {
       const result = await window.confirmationResult.confirm(code);
       const user = result.user;
 
+      // Создаём пользователя в базе, если его нет
       const userRef = ref(db, `users/${user.uid}`);
       const snapshot = await get(userRef);
 

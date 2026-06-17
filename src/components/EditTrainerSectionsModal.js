@@ -2,6 +2,7 @@ import { db } from "../firebase.js";
 import { ref, get, update } from "firebase/database";
 
 export async function openEditSectionsModal(trainerId) {
+  // Получаем текущие маршруты диспетчера
   const userRef = ref(db, `users/${trainerId}`);
   const snapshot = await get(userRef);
   let currentSections = snapshot.val()?.sections || [];
@@ -13,8 +14,10 @@ export async function openEditSectionsModal(trainerId) {
     <div class="bg-slate-900 rounded-3xl p-8 w-full max-w-md">
       <h3 class="text-2xl font-semibold mb-6">Мои маршруты</h3>
 
+      <!-- Список секций -->
       <div id="sections-tags" class="flex flex-wrap gap-2 mb-4 min-h-[50px]"></div>
 
+      <!-- Добавление новой секции -->
       <div class="flex gap-2 mb-6">
         <input type="text" id="new-section-input" 
                placeholder="Например: Москва - СПб" 
@@ -46,6 +49,7 @@ export async function openEditSectionsModal(trainerId) {
   const saveBtn = modal.querySelector("#save-btn");
   const cancelBtn = modal.querySelector("#cancel-btn");
 
+  // Функция отрисовки тегов
   function renderTags() {
     tagsContainer.innerHTML = "";
     currentSections.forEach((section, index) => {
@@ -65,6 +69,7 @@ export async function openEditSectionsModal(trainerId) {
 
   renderTags();
 
+  // Добавление новой секции
   addBtn.onclick = () => {
     const value = input.value.trim();
     if (value && !currentSections.includes(value)) {
@@ -74,6 +79,7 @@ export async function openEditSectionsModal(trainerId) {
     }
   };
 
+  // Сохранение
   saveBtn.onclick = async () => {
     try {
       await update(ref(db, `users/${trainerId}`), { sections: currentSections });
@@ -86,6 +92,7 @@ export async function openEditSectionsModal(trainerId) {
 
   cancelBtn.onclick = () => modal.remove();
 
+  // Добавление по Enter
   input.onkeydown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();

@@ -3,7 +3,7 @@ import { signOut } from "firebase/auth";
 import { ref, onValue, get } from "firebase/database";
 import Chart from 'chart.js/auto';
 
-// Импорты компонентов
+// Импорты вынесенных модулей
 import { openAthleteProfileModal } from "../components/AthleteProfileModal.js";
 import { openEditSectionsModal } from "../components/EditTrainerSectionsModal.js";
 import { openTrainerAnnouncementsModal } from "../components/TrainerAnnouncementsModal.js";
@@ -62,7 +62,7 @@ function renderDispatcherDashboard(root, user) {
         <div id="requests-list" class="space-y-3"></div>
       </div>
 
-      <!-- Закрепленные водители -->
+      <!-- Мой автопарк / Водители -->
       <div class="bg-slate-900 rounded-3xl p-6">
         <h2 class="text-xl font-semibold mb-4">Закрепленные водители и маршруты</h2>
         <div id="athletes-list" class="space-y-3"></div>
@@ -75,7 +75,7 @@ function renderDispatcherDashboard(root, user) {
   document.getElementById('announcements-btn').onclick = () => openTrainerAnnouncementsModal(user.uid);
   document.getElementById('edit-profile-btn').onclick = () => openAthleteProfileModal(user.uid, true);
 
-  loadTrainerSections(user.uid);
+  loadTrainerSections(user.uid);  // переименовано в loadDispatcherRoutes внутри функции
 
   const requestsContainer = document.getElementById('requests-list');
   loadPendingRequests(user.uid, requestsContainer);
@@ -91,7 +91,7 @@ function loadTrainerSections(trainerId) {
 
   onValue(userRef, (snapshot) => {
     const data = snapshot.val() || {};
-    const sections = data.sections || [];
+    const sections = data.sections || [];  // храним в поле sections как "маршруты"
     container.innerHTML = sections.length > 0 
       ? sections.map(s => `<span class="px-4 py-1 bg-slate-700 rounded-full text-sm">${s}</span>`).join('')
       : `<span class="text-slate-400">Маршруты не добавлены</span>`;
@@ -128,7 +128,7 @@ function renderDriverDashboard(root, user) {
         <div id="trainers-list" class="space-y-3"></div>
       </div>
 
-      <!-- История показателей -->
+      <!-- История показателей рейсов / топлива -->
       <div class="bg-slate-900 rounded-3xl p-6">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">История показателей (пробег, расход топлива)</h2>
@@ -186,40 +186,37 @@ async function loadAthleteStatus(athleteId) {
         </div>
       `;
     } else {
-      container.innerHTML = `<p class="text-slate-400">Вы пока не назначены ни на один маршрут.</p>`;
+      container.innerHTML = `<p class="text-slate-400">Вы пока не назначены ни на один маршрут / к диспетчеру.</p>`;
     }
   });
 }
 
-// ==================== ДОСТУПНЫЕ МАРШРУТЫ ====================
+// ==================== ДОСТУПНЫЕ ДИСПЕТЧЕРЫ / МАРШРУТЫ ====================
 async function loadAvailableTrainers(athleteId) {
   const container = document.getElementById('trainers-list');
   const usersRef = ref(db, 'users');
-  const requestsRef = ref(db, 'assignmentRequests');
-  const assignmentsRef = ref(db, 'assignments');
+  const requestsRef = ref(db, 'assignmentRequests');  // новая структура
+  const athletesRef = ref(db, 'assignments');  // новая структура (или athletes для совместимости)
 
-  const [usersSnap, requestsSnap, assignmentsSnap] = await Promise.all([
-    get(usersRef), get(requestsRef), get(assignmentsRef)
+  const [usersSnap, requestsSnap, athletesSnap] = await Promise.all([
+    get(usersRef), get(requestsRef), get(athletesRef)
   ]);
 
   const users = usersSnap.val() || {};
   const requests = requestsSnap.val() || {};
-  const assignments = assignmentsSnap.val() || {};
+  const athletes = athletesSnap.val() || {};
 
   container.innerHTML = '';
 
-  Object.entries(users).forEach(([dispatcherId, userData]) => {
+  Object.entries(users).forEach(([trainerId, userData]) => {
     if (userData.role !== "dispatcher") return;
 
     const hasPending = Object.values(requests).some(r => 
-      (r.athleteId === athleteId || r.driverId === athleteId) && 
-      (r.trainerId === dispatcherId || r.dispatcherId === dispatcherId) && 
-      r.status === "pending"
+      (r.athleteId === athleteId || r.driverId === athleteId) && (r.trainerId === trainerId || r.dispatcherId === trainerId) && r.status === "pending"
     );
 
-    const alreadyApproved = Object.values(assignments).some(a => 
-      (a.athleteId === athleteId || a.driverId === athleteId) && 
-      (a.trainerId === dispatcherId || a.dispatcherId === dispatcherId)
+    const alreadyApproved = Object.values(athletes).some(a => 
+      (a.athleteId === athleteId || a.driverId === athleteId) && (a.trainerId === trainerId || a.dispatcherId === trainerId)
     );
 
     const sections = userData.sections || ["Не указаны"];
@@ -245,7 +242,7 @@ async function loadAvailableTrainers(athleteId) {
           <span class="font-semibold">${userData.name}</span>
           <span class="ml-3 text-sm text-slate-400">${sections.join(", ")}</span>
         </div>
-        <button class="join-btn px-5 py-2 bg-emerald-600 rounded-2xl text-sm" data-trainer-id="${dispatcherId}">Отправить заявку</button>
+        <button class="join-btn px-5 py-2 bg-emerald-600 rounded-2xl text-sm" data-trainer-id="${trainerId}">Отправить заявку</button>
       `;
     }
     container.appendChild(div);
@@ -271,14 +268,14 @@ async function sendJoinRequest(athleteId, trainerId) {
   showSectionSelectionModal(athleteId, trainerId, sections);
 }
 
-// ==================== ПОКАЗАТЕЛИ РЕЙСОВ / ТОПЛИВА ====================
+// ==================== ПОКАЗАТЕЛИ РЕЙСОВ / ТОПЛИВА ВОДИТЕЛЯ ====================
 let allMyIndicators = [];
 
 function loadMyIndicators(athleteId) {
   const listContainer = document.getElementById('indicators-list');
   const filterSelect = document.getElementById('metric-filter');
   const statsContainer = document.getElementById('stats-container');
-  const indicatorsRef = ref(db, 'performanceIndicators');
+  const indicatorsRef = ref(db, 'performanceIndicators');  // или 'tripMetrics' - можно сменить
 
   onValue(indicatorsRef, (snapshot) => {
     const data = snapshot.val() || {};
