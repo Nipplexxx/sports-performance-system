@@ -327,35 +327,60 @@ function renderStats(data, container) {
   }
 
   const values = data.map(d => d.value);
-  const unit = data[0]?.unit || '';
+  const unit = (data[0]?.unit || '').toLowerCase();
+  const metricName = (data[0]?.metric || '').toLowerCase();
 
-  const isTimeBased = unit.toLowerCase().includes('сек') || 
-                      unit.toLowerCase().includes('мин') || 
-                      unit.toLowerCase().includes('с');
+  // Определяем тип показателя
+  const isFuelConsumption = unit.includes('л') || metricName.includes('расход') || metricName.includes('топлив');
+  const isDistance = unit.includes('км') && !isFuelConsumption;
+  const isTime = unit.includes('час') || unit.includes('мин') || unit.includes('сек') || 
+                 metricName.includes('время') || metricName.includes('простой');
 
-  const best = isTimeBased ? Math.min(...values) : Math.max(...values);
-  const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+  let best, avg, progressLabel, progressValue, progressColor;
+
+  if (isFuelConsumption || isTime) {
+    // Чем меньше — тем лучше (расход, время)
+    best = Math.min(...values);
+    avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+    const first = data[0].value;
+    const last = data[data.length - 1].value;
+    progressValue = ((first - last) / first * 100).toFixed(1);
+    progressLabel = progressValue >= 0 ? 'Улучшение' : 'Ухудшение';
+    progressColor = progressValue >= 0 ? 'text-emerald-400' : 'text-red-400';
+  } 
+  else {
+    // Чем больше — тем лучше (пробег и т.д.)
+    best = Math.max(...values);
+    avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+    const first = data[0].value;
+    const last = data[data.length - 1].value;
+    progressValue = ((last - first) / first * 100).toFixed(1);
+    progressLabel = progressValue >= 0 ? 'Рост' : 'Снижение';
+    progressColor = progressValue >= 0 ? 'text-emerald-400' : 'text-red-400';
+  }
+
   const last = data[data.length - 1].value;
-  const first = data[0].value;
-  const progress = ((first - last) / first * 100).toFixed(1);
 
   container.innerHTML = `
     <div class="bg-slate-800 p-4 rounded-2xl">
       <div class="text-sm text-slate-400">Лучший результат</div>
-      <div class="text-2xl font-semibold mt-1">${best} <span class="text-sm">${unit}</span></div>
+      <div class="text-2xl font-semibold mt-1">${best} <span class="text-sm">${data[0]?.unit || ''}</span></div>
     </div>
+    
     <div class="bg-slate-800 p-4 rounded-2xl">
       <div class="text-sm text-slate-400">Средний результат</div>
-      <div class="text-2xl font-semibold mt-1">${avg} <span class="text-sm">${unit}</span></div>
+      <div class="text-2xl font-semibold mt-1">${avg} <span class="text-sm">${data[0]?.unit || ''}</span></div>
     </div>
+    
     <div class="bg-slate-800 p-4 rounded-2xl">
       <div class="text-sm text-slate-400">Последний результат</div>
-      <div class="text-2xl font-semibold mt-1">${last} <span class="text-sm">${unit}</span></div>
+      <div class="text-2xl font-semibold mt-1">${last} <span class="text-sm">${data[0]?.unit || ''}</span></div>
     </div>
+    
     <div class="bg-slate-800 p-4 rounded-2xl">
-      <div class="text-sm text-slate-400">Прогресс</div>
-      <div class="text-2xl font-semibold mt-1 ${progress >= 0 ? 'text-emerald-400' : 'text-red-400'}">
-        ${progress >= 0 ? '+' : ''}${progress}%
+      <div class="text-sm text-slate-400">${progressLabel}</div>
+      <div class="text-2xl font-semibold mt-1 ${progressColor}">
+        ${progressValue >= 0 ? '+' : ''}${progressValue}%
       </div>
     </div>
   `;
