@@ -36,7 +36,13 @@ export function renderLogin(root, onLoginSuccess) {
           <span>Войти по номеру телефона</span>
         </button>
 
-        <p class="text-center mt-6 text-sm">
+        <p class="text-center mt-6 text-xs text-slate-500">
+          Входя в систему, вы соглашаетесь с 
+          <a href="#" id="privacy-link" class="text-emerald-400 hover:underline">Политикой конфиденциальности</a>.<br>
+          <span class="text-[10px]">Оператор находится на территории ЕС • GDPR</span>
+        </p>
+
+        <p class="text-center mt-4 text-sm">
           Нет аккаунта? <span id="to-register" class="text-emerald-400 cursor-pointer hover:underline">Зарегистрироваться</span>
         </p>
       </div>
@@ -90,10 +96,17 @@ export function renderLogin(root, onLoginSuccess) {
   document.getElementById('to-register').onclick = () => {
     import('./Register.js').then(m => m.renderRegister(root, onLoginSuccess));
   };
+
+  // Политика конфиденциальности
+  document.getElementById('privacy-link').onclick = (e) => {
+    e.preventDefault();
+    alert("Политика конфиденциальности\n\nОператор обработки персональных данных находится на территории Европейского Союза.\nОбработка ПД осуществляется в соответствии с GDPR (Regulation (EU) 2016/679).");
+  };
 }
 
 // ==================== МОДАЛКА ДЛЯ ВХОДА ПО ТЕЛЕФОНУ ====================
 function showPhoneLoginModal(onLoginSuccess) {
+  // ... (оставляем как было, без изменений)
   const modal = document.createElement('div');
   modal.className = `fixed inset-0 bg-black/70 flex items-center justify-center z-[999]`;
 
@@ -127,14 +140,12 @@ function showPhoneLoginModal(onLoginSuccess) {
   const closeBtn = modal.querySelector('#close-phone-modal');
   closeBtn.onclick = () => modal.remove();
 
-  // Инициализация reCAPTCHA (невидимая)
   if (!recaptchaVerifier) {
     recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       size: 'invisible',
     });
   }
 
-  // Отправка кода
   modal.querySelector('#send-code-btn').onclick = async () => {
     const phoneNumber = modal.querySelector('#phone-number').value.trim();
 
@@ -154,7 +165,6 @@ function showPhoneLoginModal(onLoginSuccess) {
     }
   };
 
-  // Подтверждение кода
   modal.querySelector('#verify-code-btn').onclick = async () => {
     const code = modal.querySelector('#verification-code').value.trim();
 
@@ -162,7 +172,6 @@ function showPhoneLoginModal(onLoginSuccess) {
       const result = await window.confirmationResult.confirm(code);
       const user = result.user;
 
-      // Создаём пользователя в базе, если его нет
       const userRef = ref(db, `users/${user.uid}`);
       const snapshot = await get(userRef);
 
