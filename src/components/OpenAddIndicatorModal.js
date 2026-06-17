@@ -7,7 +7,7 @@ export function openAddIndicatorModal(athleteId, trainerId) {
 
   modal.innerHTML = `
     <div class="bg-slate-900 rounded-3xl p-8 w-full max-w-lg">
-      <h3 class="text-2xl font-semibold mb-6">Добавить показатель</h3>
+      <h3 class="text-2xl font-semibold mb-6">Добавить показатель рейса</h3>
       <form id="indicator-form" class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -16,7 +16,7 @@ export function openAddIndicatorModal(athleteId, trainerId) {
           </div>
           <div>
             <label class="text-sm text-slate-400">Показатель</label>
-            <input type="text" id="metric" placeholder="Бег 30м" class="w-full bg-slate-800 p-3 rounded-2xl" required>
+            <input type="text" id="metric" placeholder="Расход топлива" class="w-full bg-slate-800 p-3 rounded-2xl" required>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -26,7 +26,7 @@ export function openAddIndicatorModal(athleteId, trainerId) {
           </div>
           <div>
             <label class="text-sm text-slate-400">Единица</label>
-            <input type="text" id="unit" value="сек" class="w-full bg-slate-800 p-3 rounded-2xl">
+            <input type="text" id="unit" value="л/100км" class="w-full bg-slate-800 p-3 rounded-2xl">
           </div>
         </div>
         <div>

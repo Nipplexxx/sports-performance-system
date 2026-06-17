@@ -1,5 +1,5 @@
 import { auth, db } from './firebase.js';
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { ref, get } from "firebase/database";
 
 import { renderLogin } from './pages/Login.js';
@@ -22,7 +22,6 @@ onAuthStateChanged(auth, async (user) => {
   const role = await getUserRole(user.uid);
 
   if (!role) {
-    // Если роли нет (старые пользователи) — отправляем на регистрацию
     renderRegister(root, () => window.location.reload());
     return;
   }

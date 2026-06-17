@@ -6,7 +6,7 @@ export function renderRegister(root, onSuccess) {
   root.innerHTML = `
     <div class="min-h-screen flex items-center justify-center bg-slate-950">
       <div class="bg-slate-900 p-8 rounded-3xl w-full max-w-md">
-        <h1 class="text-3xl font-bold mb-6 text-center">Регистрация</h1>
+        <h1 class="text-3xl font-bold mb-6 text-center">Регистрация в системе «Континент Автопарк»</h1>
 
         <form id="register-form" class="space-y-4">
           <input type="text" id="name" placeholder="Имя" class="w-full bg-slate-800 p-3 rounded-2xl" required>
@@ -16,8 +16,8 @@ export function renderRegister(root, onSuccess) {
           <div>
             <label class="block text-sm text-slate-400 mb-1.5">Я регистрируюсь как:</label>
             <select id="role" class="w-full bg-slate-800 p-3 rounded-2xl">
-              <option value="trainer">Тренер / Аналитик</option>
-              <option value="athlete">Спортсмен</option>
+              <option value="dispatcher">Диспетчер / Менеджер автопарка</option>
+              <option value="driver">Водитель</option>
             </select>
           </div>
 

@@ -2,7 +2,6 @@ import { db } from "../firebase.js";
 import { ref, get, update } from "firebase/database";
 
 export async function openEditSectionsModal(trainerId) {
-  // Получаем текущие секции
   const userRef = ref(db, `users/${trainerId}`);
   const snapshot = await get(userRef);
   let currentSections = snapshot.val()?.sections || [];
@@ -12,15 +11,13 @@ export async function openEditSectionsModal(trainerId) {
 
   modal.innerHTML = `
     <div class="bg-slate-900 rounded-3xl p-8 w-full max-w-md">
-      <h3 class="text-2xl font-semibold mb-6">Мои секции</h3>
+      <h3 class="text-2xl font-semibold mb-6">Мои маршруты</h3>
 
-      <!-- Список секций -->
       <div id="sections-tags" class="flex flex-wrap gap-2 mb-4 min-h-[50px]"></div>
 
-      <!-- Добавление новой секции -->
       <div class="flex gap-2 mb-6">
         <input type="text" id="new-section-input" 
-               placeholder="Например: Плавание" 
+               placeholder="Например: Москва - СПб" 
                class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-2xl text-sm">
         <button id="add-section-btn" 
                 class="px-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-sm font-medium">
@@ -49,7 +46,6 @@ export async function openEditSectionsModal(trainerId) {
   const saveBtn = modal.querySelector("#save-btn");
   const cancelBtn = modal.querySelector("#cancel-btn");
 
-  // Функция отрисовки тегов
   function renderTags() {
     tagsContainer.innerHTML = "";
     currentSections.forEach((section, index) => {
@@ -69,7 +65,6 @@ export async function openEditSectionsModal(trainerId) {
 
   renderTags();
 
-  // Добавление новой секции
   addBtn.onclick = () => {
     const value = input.value.trim();
     if (value && !currentSections.includes(value)) {
@@ -79,12 +74,11 @@ export async function openEditSectionsModal(trainerId) {
     }
   };
 
-  // Сохранение
   saveBtn.onclick = async () => {
     try {
       await update(ref(db, `users/${trainerId}`), { sections: currentSections });
       modal.remove();
-      alert("Секции сохранены!");
+      alert("Маршруты сохранены!");
     } catch (error) {
       alert("Ошибка при сохранении: " + error.message);
     }
@@ -92,7 +86,6 @@ export async function openEditSectionsModal(trainerId) {
 
   cancelBtn.onclick = () => modal.remove();
 
-  // Добавление по Enter
   input.onkeydown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();

@@ -8,8 +8,8 @@ export function renderLogin(root, onLoginSuccess) {
   root.innerHTML = `
     <div class="min-h-screen flex items-center justify-center bg-slate-950">
       <div class="bg-slate-900 p-8 rounded-3xl w-full max-w-md">
-        <h1 class="text-3xl font-bold mb-2 text-center">PerfTrack Athletes</h1>
-        <p class="text-center text-slate-400 mb-8">Вход в систему</p>
+        <h1 class="text-3xl font-bold mb-2 text-center">Континент Автопарк</h1>
+        <p class="text-center text-slate-400 mb-8">Вход в информационную систему</p>
 
         <!-- Email + Password -->
         <form id="login-form" class="space-y-4">
@@ -71,7 +71,7 @@ export function renderLogin(root, onLoginSuccess) {
         await set(userRef, {
           name: user.displayName || "Без имени",
           email: user.email,
-          role: "athlete",
+          role: "driver",
           createdAt: Date.now(),
           provider: "google"
         });
@@ -127,14 +127,12 @@ function showPhoneLoginModal(onLoginSuccess) {
   const closeBtn = modal.querySelector('#close-phone-modal');
   closeBtn.onclick = () => modal.remove();
 
-  // Инициализация reCAPTCHA (невидимая)
   if (!recaptchaVerifier) {
     recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       size: 'invisible',
     });
   }
 
-  // Отправка кода
   modal.querySelector('#send-code-btn').onclick = async () => {
     const phoneNumber = modal.querySelector('#phone-number').value.trim();
 
@@ -154,7 +152,6 @@ function showPhoneLoginModal(onLoginSuccess) {
     }
   };
 
-  // Подтверждение кода
   modal.querySelector('#verify-code-btn').onclick = async () => {
     const code = modal.querySelector('#verification-code').value.trim();
 
@@ -162,7 +159,6 @@ function showPhoneLoginModal(onLoginSuccess) {
       const result = await window.confirmationResult.confirm(code);
       const user = result.user;
 
-      // Создаём пользователя в базе, если его нет
       const userRef = ref(db, `users/${user.uid}`);
       const snapshot = await get(userRef);
 
@@ -170,7 +166,7 @@ function showPhoneLoginModal(onLoginSuccess) {
         await set(userRef, {
           name: "Пользователь",
           phone: user.phoneNumber,
-          role: "athlete",
+          role: "driver",
           createdAt: Date.now(),
           provider: "phone"
         });

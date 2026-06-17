@@ -2,16 +2,17 @@ import { db } from "../firebase.js";
 import { ref, onValue, get, update, push } from "firebase/database";
 
 export function loadPendingRequests(trainerId, container) {
-  const requestsRef = ref(db, 'athleteRequests');
+  const requestsRef = ref(db, 'assignmentRequests');
 
   onValue(requestsRef, async (snapshot) => {
     container.innerHTML = '';
     const requests = snapshot.val() || {};
 
     for (const [requestId, req] of Object.entries(requests)) {
-      if (req.trainerId !== trainerId || req.status !== "pending") continue;
+      if (req.trainerId !== trainerId && req.dispatcherId !== trainerId) continue;
+      if (req.status !== "pending") continue;
 
-      const athleteSnap = await get(ref(db, `users/${req.athleteId}`));
+      const athleteSnap = await get(ref(db, `users/${req.athleteId || req.driverId}`));
       const athleteName = athleteSnap.val()?.name || "Неизвестный";
 
       const div = document.createElement('div');
@@ -39,20 +40,20 @@ export function loadPendingRequests(trainerId, container) {
 }
 
 async function approveRequest(requestId, trainerId) {
-  const requestRef = ref(db, `athleteRequests/${requestId}`);
+  const requestRef = ref(db, `assignmentRequests/${requestId}`);
   const snapshot = await get(requestRef);
   const request = snapshot.val();
   if (!request) return;
 
-  await push(ref(db, 'athletes'), {
-    athleteId: request.athleteId,
-    trainerId,
-    section: request.section,
+  await push(ref(db, 'assignments'), {
+    driverId: request.athleteId || request.driverId,
+    dispatcherId: trainerId,
+    route: request.section,
     approvedAt: Date.now()
   });
   await update(requestRef, { status: "approved" });
 }
 
 async function rejectRequest(requestId) {
-  await update(ref(db, `athleteRequests/${requestId}`), { status: "rejected" });
+  await update(ref(db, `assignmentRequests/${requestId}`), { status: "rejected" });
 }
