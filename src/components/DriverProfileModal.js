@@ -4,9 +4,9 @@ import { updateEmail } from "firebase/auth";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase.js";
 
-export async function openAthleteProfileModal(athleteId, canEdit = false) {
-  const userRef = dbRef(db, `users/${athleteId}`);
-  const profileRef = dbRef(db, `athleteProfiles/${athleteId}`);
+export async function openDriverProfileModal(driverId, canEdit = false) {
+  const userRef = dbRef(db, `users/${driverId}`);
+  const profileRef = dbRef(db, `driverProfiles/${driverId}`);
 
   const [userSnap, profileSnap] = await Promise.all([
     get(userRef),
@@ -15,22 +15,22 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
 
   const userData = userSnap.val() || {};
   const profile = profileSnap.val() || {
-    height: "",
-    weight: "",
+    experience: "",      // Стаж работы (лет)
+    license: "",         // Номер ВУ / Категория
     birthDate: "",
     medicalInfo: "",
-    avatarUrl: "",
-    position: "",
-    team: ""
+    avatarUrl: ""
   };
 
-  const isOwnProfile = auth.currentUser?.uid === athleteId;
+  const isOwnProfile = auth.currentUser?.uid === driverId;
   const role = userData.role || "driver";
 
   // Определяем заголовок модалки
   let modalTitle = "Профиль водителя";
   if (isOwnProfile) {
-    modalTitle = role === "dispatcher" ? "Профиль диспетчера" : "Мой профиль водителя";
+    modalTitle = role === "dispatcher" 
+      ? "Профиль диспетчера" 
+      : "Мой профиль водителя";
   } else {
     modalTitle = "Профиль водителя";
   }
@@ -77,22 +77,22 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-sm text-slate-400">Стаж работы (лет)</label>
-            <input type="number" id="height" value="${profile.height || profile.experience || ''}" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>
+            <input type="number" id="experience" value="${profile.experience || ''}" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>
           </div>
           <div>
             <label class="text-sm text-slate-400">Номер ВУ / Категория</label>
-            <input type="text" id="weight" value="${profile.weight || profile.license || ''}" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>
+            <input type="text" id="license" value="${profile.license || ''}" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>
           </div>
         </div>
 
         <div>
           <label class="text-sm text-slate-400">Дата рождения</label>
-          <input type="date" id="birthDate" value="${profile.birthDate}" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>
+          <input type="date" id="birthDate" value="${profile.birthDate || ''}" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>
         </div>
 
         <div>
-          <label class="text-sm text-slate-400">Медицинская информация</label>
-          <textarea id="medicalInfo" rows="3" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>${profile.medicalInfo}</textarea>
+          <label class="text-sm text-slate-400">Медицинская информация / Ограничения</label>
+          <textarea id="medicalInfo" rows="3" class="w-full bg-slate-800 p-3 rounded-2xl" ${!canEdit ? 'disabled' : ''}>${profile.medicalInfo || ''}</textarea>
         </div>
 
         <div class="flex gap-3 pt-4">
@@ -112,16 +112,17 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
 
   closeBtn.onclick = () => modal.remove();
 
-  let uploadedAvatarUrl = profile.avatarUrl;
+  let uploadedAvatarUrl = profile.avatarUrl || "";
 
   // Загрузка фото (только владелец профиля)
   if (canEdit && fileInput && isOwnProfile) {
     fileInput.onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
+
       try {
         avatarPreview.src = URL.createObjectURL(file);
-        const fileRef = storageRef(storage, `avatars/${athleteId}/${Date.now()}_${file.name}`);
+        const fileRef = storageRef(storage, `avatars/${driverId}/${Date.now()}_${file.name}`);
         await uploadBytes(fileRef, file);
         uploadedAvatarUrl = await getDownloadURL(fileRef);
       } catch (error) {
@@ -130,6 +131,7 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
     };
   }
 
+  // Сохранение профиля
   if (canEdit) {
     form.onsubmit = async (e) => {
       e.preventDefault();
@@ -141,8 +143,8 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
       };
 
       const updatedProfile = {
-        height: parseInt(form.height.value) || null,
-        weight: parseInt(form.weight.value) || null,
+        experience: parseInt(form.experience.value) || null,
+        license: form.license.value.trim(),
         birthDate: form.birthDate.value,
         medicalInfo: form.medicalInfo.value.trim(),
         avatarUrl: uploadedAvatarUrl,
@@ -150,8 +152,8 @@ export async function openAthleteProfileModal(athleteId, canEdit = false) {
       };
 
       try {
-        await update(dbRef(db, `users/${athleteId}`), updatedUser);
-        await set(dbRef(db, `athleteProfiles/${athleteId}`), updatedProfile);
+        await update(dbRef(db, `users/${driverId}`), updatedUser);
+        await set(dbRef(db, `driverProfiles/${driverId}`), updatedProfile);
 
         // Обновление email в Firebase Auth (только для владельца)
         if (isOwnProfile && auth.currentUser.email !== updatedUser.email) {

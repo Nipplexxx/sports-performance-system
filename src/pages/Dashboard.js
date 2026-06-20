@@ -3,16 +3,16 @@ import { signOut } from "firebase/auth";
 import { ref, onValue, get } from "firebase/database";
 import Chart from 'chart.js/auto';
 
-// Импорты вынесенных модулей
-import { openAthleteProfileModal } from "../components/AthleteProfileModal.js";
-import { openEditSectionsModal } from "../components/EditTrainerSectionsModal.js";
-import { openTrainerAnnouncementsModal } from "../components/TrainerAnnouncementsModal.js";
-import { openAddIndicatorModal } from "../components/OpenAddIndicatorModal.js";
+// ==================== ИМПОРТЫ ====================
+import { openDriverProfileModal } from "../components/DriverProfileModal.js";
+import { openEditDispatcherRoutesModal } from "../components/EditDispatcherRoutesModal.js";
+import { openDispatcherAnnouncementsModal } from "../components/DispatcherAnnouncementsModal.js";
+import { openAddTripMetricModal } from "../components/OpenAddTripMetricModal.js";
 
-import { loadApprovedAthletes } from "../components/LoadApprovedAthletes.js";
+import { loadApprovedDrivers } from "../components/LoadApprovedDrivers.js";
 import { loadPendingRequests } from "../components/LoadPendingRequests.js";
-import { loadTrainerAnnouncements } from "../components/LoadTrainerAnnouncements.js";
-import { showSectionSelectionModal } from "../components/ShowSectionSelectionModal.js";
+import { loadDispatcherAnnouncements } from "../components/LoadDispatcherAnnouncements.js";
+import { showRouteSelectionModal } from "../components/ShowRouteSelectionModal.js";
 
 // ==================== ГЛАВНЫЙ РЕНДЕР ====================
 export function renderDashboard(root, user, role) {
@@ -50,10 +50,10 @@ function renderDispatcherDashboard(root, user) {
               <i class="fa-solid fa-bullhorn"></i>
               <span>Объявления / График рейсов</span>
             </button>
-            <button id="edit-sections-btn" class="text-emerald-400 hover:text-emerald-300 text-sm">Редактировать маршруты</button>
+            <button id="edit-routes-btn" class="text-emerald-400 hover:text-emerald-300 text-sm">Редактировать маршруты</button>
           </div>
         </div>
-        <div id="sections-list" class="flex flex-wrap gap-2"></div>
+        <div id="routes-list" class="flex flex-wrap gap-2"></div>
       </div>
 
       <!-- Заявки от водителей -->
@@ -62,38 +62,39 @@ function renderDispatcherDashboard(root, user) {
         <div id="requests-list" class="space-y-3"></div>
       </div>
 
-      <!-- Мой автопарк / Водители -->
+      <!-- Закреплённые водители -->
       <div class="bg-slate-900 rounded-3xl p-6">
-        <h2 class="text-xl font-semibold mb-4">Закрепленные водители и маршруты</h2>
-        <div id="athletes-list" class="space-y-3"></div>
+        <h2 class="text-xl font-semibold mb-4">Закреплённые водители и маршруты</h2>
+        <div id="drivers-list" class="space-y-3"></div>
       </div>
     </div>
   `;
 
   document.getElementById('logout-btn').onclick = () => signOut(auth);
-  document.getElementById('edit-sections-btn').onclick = () => openEditSectionsModal(user.uid);
-  document.getElementById('announcements-btn').onclick = () => openTrainerAnnouncementsModal(user.uid);
-  document.getElementById('edit-profile-btn').onclick = () => openAthleteProfileModal(user.uid, true);
+  document.getElementById('edit-routes-btn').onclick = () => openEditDispatcherRoutesModal(user.uid);
+  document.getElementById('announcements-btn').onclick = () => openDispatcherAnnouncementsModal(user.uid);
+  document.getElementById('edit-profile-btn').onclick = () => openDriverProfileModal(user.uid, true);
 
-  loadTrainerSections(user.uid);  // переименовано в loadDispatcherRoutes внутри функции
+  loadDispatcherRoutes(user.uid);
 
   const requestsContainer = document.getElementById('requests-list');
   loadPendingRequests(user.uid, requestsContainer);
 
-  const athletesContainer = document.getElementById('athletes-list');
-  loadApprovedAthletes(user.uid, athletesContainer);
+  const driversContainer = document.getElementById('drivers-list');
+  loadApprovedDrivers(user.uid, driversContainer);
 }
 
-// ==================== МАРШРУТЫ ДИСПЕТЧЕРА ====================
-function loadTrainerSections(trainerId) {
-  const container = document.getElementById('sections-list');
-  const userRef = ref(db, `users/${trainerId}`);
+// ==================== ЗАГРУЗКА МАРШРУТОВ ДИСПЕТЧЕРА ====================
+function loadDispatcherRoutes(dispatcherId) {
+  const container = document.getElementById('routes-list');
+  const userRef = ref(db, `users/${dispatcherId}`);
 
   onValue(userRef, (snapshot) => {
     const data = snapshot.val() || {};
-    const sections = data.sections || [];  // храним в поле sections как "маршруты"
-    container.innerHTML = sections.length > 0 
-      ? sections.map(s => `<span class="px-4 py-1 bg-slate-700 rounded-full text-sm">${s}</span>`).join('')
+    const routes = data.sections || [];
+
+    container.innerHTML = routes.length > 0
+      ? routes.map(r => `<span class="px-4 py-1 bg-slate-700 rounded-full text-sm">${r}</span>`).join('')
       : `<span class="text-slate-400">Маршруты не добавлены</span>`;
   });
 }
@@ -116,22 +117,22 @@ function renderDriverDashboard(root, user) {
         </div>
       </div>
 
-      <div id="my-trainer-status" class="bg-slate-900 rounded-3xl p-6 mb-6"></div>
+      <div id="my-dispatcher-status" class="bg-slate-900 rounded-3xl p-6 mb-6"></div>
 
       <div class="bg-slate-900 rounded-3xl p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Объявления и графики от диспетчера</h2>
-        <div id="trainer-announcements" class="space-y-3"></div>
+        <div id="dispatcher-announcements" class="space-y-3"></div>
       </div>
 
       <div class="bg-slate-900 rounded-3xl p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Доступные маршруты для запроса</h2>
-        <div id="trainers-list" class="space-y-3"></div>
+        <div id="dispatchers-list" class="space-y-3"></div>
       </div>
 
-      <!-- История показателей рейсов / топлива -->
+      <!-- История показателей рейсов -->
       <div class="bg-slate-900 rounded-3xl p-6">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">История показателей (пробег, расход топлива)</h2>
+          <h2 class="text-xl font-semibold">История показателей рейсов (пробег, расход топлива)</h2>
           <select id="metric-filter" class="bg-slate-800 border border-slate-700 px-4 py-2 rounded-2xl text-sm">
             <option value="">Все показатели</option>
           </select>
@@ -139,26 +140,26 @@ function renderDriverDashboard(root, user) {
 
         <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
         <canvas id="chart" class="mb-6" height="100"></canvas>
-        <div id="indicators-list" class="space-y-3"></div>
+        <div id="trip-metrics-list" class="space-y-3"></div>
       </div>
     </div>
   `;
 
   document.getElementById('logout-btn').onclick = () => signOut(auth);
-  document.getElementById('edit-profile-btn').onclick = () => openAthleteProfileModal(user.uid, true);
+  document.getElementById('edit-profile-btn').onclick = () => openDriverProfileModal(user.uid, true);
 
-  loadAthleteStatus(user.uid);
+  loadDriverStatus(user.uid);
 
-  const announcementsContainer = document.getElementById('trainer-announcements');
-  loadTrainerAnnouncements(user.uid, announcementsContainer);
+  const announcementsContainer = document.getElementById('dispatcher-announcements');
+  loadDispatcherAnnouncements(user.uid, announcementsContainer);
 
-  loadAvailableTrainers(user.uid);
-  loadMyIndicators(user.uid);
+  loadAvailableDispatchers(user.uid);
+  loadMyTripMetrics(user.uid);
 }
 
 // ==================== СТАТУС НАЗНАЧЕНИЯ ВОДИТЕЛЯ ====================
-async function loadAthleteStatus(athleteId) {
-  const container = document.getElementById('my-trainer-status');
+async function loadDriverStatus(driverId) {
+  const container = document.getElementById('my-dispatcher-status');
   const assignmentsRef = ref(db, 'assignments');
 
   onValue(assignmentsRef, async (snapshot) => {
@@ -167,8 +168,8 @@ async function loadAthleteStatus(athleteId) {
     let myRoute = "";
 
     for (const assignment of Object.values(assignments)) {
-      if (assignment.driverId === athleteId) {
-        const dispatcherSnap = await get(ref(db, `users/${assignment.dispatcherId || assignment.trainerId}`));
+      if (assignment.driverId === driverId) {
+        const dispatcherSnap = await get(ref(db, `users/${assignment.dispatcherId}`));
         myDispatcher = dispatcherSnap.val();
         myRoute = assignment.route || assignment.section || "Не указан";
         break;
@@ -186,53 +187,53 @@ async function loadAthleteStatus(athleteId) {
         </div>
       `;
     } else {
-      container.innerHTML = `<p class="text-slate-400">Вы пока не назначены ни на один маршрут / к диспетчеру.</p>`;
+      container.innerHTML = `<p class="text-slate-400">Вы пока не назначены ни на один маршрут.</p>`;
     }
   });
 }
 
-// ==================== ДОСТУПНЫЕ ДИСПЕТЧЕРЫ / МАРШРУТЫ ====================
-async function loadAvailableTrainers(athleteId) {
-  const container = document.getElementById('trainers-list');
+// ==================== ДОСТУПНЫЕ ДИСПЕТЧЕРЫ ====================
+async function loadAvailableDispatchers(driverId) {
+  const container = document.getElementById('dispatchers-list');
   const usersRef = ref(db, 'users');
-  const requestsRef = ref(db, 'assignmentRequests');  // новая структура
-  const athletesRef = ref(db, 'assignments');  // новая структура (или athletes для совместимости)
+  const requestsRef = ref(db, 'assignmentRequests');
+  const assignmentsRef = ref(db, 'assignments');
 
-  const [usersSnap, requestsSnap, athletesSnap] = await Promise.all([
-    get(usersRef), get(requestsRef), get(athletesRef)
+  const [usersSnap, requestsSnap, assignmentsSnap] = await Promise.all([
+    get(usersRef), get(requestsRef), get(assignmentsRef)
   ]);
 
   const users = usersSnap.val() || {};
   const requests = requestsSnap.val() || {};
-  const athletes = athletesSnap.val() || {};
+  const assignments = assignmentsSnap.val() || {};
 
   container.innerHTML = '';
 
-  Object.entries(users).forEach(([trainerId, userData]) => {
+  Object.entries(users).forEach(([dispatcherIdKey, userData]) => {
     if (userData.role !== "dispatcher") return;
 
-    const hasPending = Object.values(requests).some(r => 
-      (r.athleteId === athleteId || r.driverId === athleteId) && (r.trainerId === trainerId || r.dispatcherId === trainerId) && r.status === "pending"
+    const hasPending = Object.values(requests).some(r =>
+      r.driverId === driverId && r.dispatcherId === dispatcherIdKey && r.status === "pending"
     );
 
-    const alreadyApproved = Object.values(athletes).some(a => 
-      (a.athleteId === athleteId || a.driverId === athleteId) && (a.trainerId === trainerId || a.dispatcherId === trainerId)
+    const alreadyApproved = Object.values(assignments).some(a =>
+      a.driverId === driverId && a.dispatcherId === dispatcherIdKey
     );
 
-    const sections = userData.sections || ["Не указаны"];
+    const routes = userData.sections || ["Не указаны"];
 
     const div = document.createElement('div');
     div.className = 'bg-slate-800 p-4 rounded-2xl flex justify-between items-center';
 
     if (hasPending || alreadyApproved) {
-      const status = alreadyApproved 
-        ? `<span class="text-emerald-400 text-sm">Вы уже записаны</span>` 
+      const status = alreadyApproved
+        ? `<span class="text-emerald-400 text-sm">Вы уже назначены</span>`
         : `<span class="text-yellow-400 text-sm">Заявка отправлена</span>`;
-      
+
       div.innerHTML = `
         <div>
           <span class="font-semibold">${userData.name}</span>
-          <span class="ml-3 text-sm text-slate-400">${sections.join(", ")}</span>
+          <span class="ml-3 text-sm text-slate-400">${routes.join(", ")}</span>
         </div>
         ${status}
       `;
@@ -240,50 +241,50 @@ async function loadAvailableTrainers(athleteId) {
       div.innerHTML = `
         <div>
           <span class="font-semibold">${userData.name}</span>
-          <span class="ml-3 text-sm text-slate-400">${sections.join(", ")}</span>
+          <span class="ml-3 text-sm text-slate-400">${routes.join(", ")}</span>
         </div>
-        <button class="join-btn px-5 py-2 bg-emerald-600 rounded-2xl text-sm" data-trainer-id="${trainerId}">Отправить заявку</button>
+        <button class="join-btn px-5 py-2 bg-emerald-600 rounded-2xl text-sm" data-dispatcher-id="${dispatcherIdKey}">Отправить заявку</button>
       `;
     }
     container.appendChild(div);
   });
 
   container.querySelectorAll('.join-btn').forEach(btn => {
-    btn.onclick = () => sendJoinRequest(athleteId, btn.dataset.trainerId);
+    btn.onclick = () => sendJoinRequest(driverId, btn.dataset.dispatcherId);
   });
 }
 
 // ==================== ОТПРАВКА ЗАЯВКИ ====================
-async function sendJoinRequest(athleteId, trainerId) {
-  const trainerRef = ref(db, `users/${trainerId}`);
-  const snapshot = await get(trainerRef);
-  const trainerData = snapshot.val() || {};
-  const sections = trainerData.sections || [];
+async function sendJoinRequest(driverId, dispatcherId) {
+  const dispatcherRef = ref(db, `users/${dispatcherId}`);
+  const snapshot = await get(dispatcherRef);
+  const dispatcherData = snapshot.val() || {};
+  const routes = dispatcherData.sections || [];
 
-  if (sections.length === 0) {
+  if (routes.length === 0) {
     alert("У диспетчера пока не указаны маршруты");
     return;
   }
 
-  showSectionSelectionModal(athleteId, trainerId, sections);
+  showRouteSelectionModal(driverId, dispatcherId, routes);
 }
 
-// ==================== ПОКАЗАТЕЛИ РЕЙСОВ / ТОПЛИВА ВОДИТЕЛЯ ====================
-let allMyIndicators = [];
+// ==================== ПОКАЗАТЕЛИ РЕЙСОВ ВОДИТЕЛЯ ====================
+let allMyTripMetrics = [];
 
-function loadMyIndicators(athleteId) {
-  const listContainer = document.getElementById('indicators-list');
+function loadMyTripMetrics(driverId) {
+  const listContainer = document.getElementById('trip-metrics-list');
   const filterSelect = document.getElementById('metric-filter');
   const statsContainer = document.getElementById('stats-container');
-  const indicatorsRef = ref(db, 'performanceIndicators');  // или 'tripMetrics' - можно сменить
+  const metricsRef = ref(db, 'tripMetrics');
 
-  onValue(indicatorsRef, (snapshot) => {
+  onValue(metricsRef, (snapshot) => {
     const data = snapshot.val() || {};
-    allMyIndicators = Object.values(data)
-      .filter(i => i.athleteId === athleteId || i.driverId === athleteId)
+    allMyTripMetrics = Object.values(data)
+      .filter(i => i.driverId === driverId)
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    const uniqueMetrics = [...new Set(allMyIndicators.map(i => i.metric))];
+    const uniqueMetrics = [...new Set(allMyTripMetrics.map(i => i.metric))];
     filterSelect.innerHTML = `<option value="">Все показатели</option>`;
     uniqueMetrics.forEach(metric => {
       const option = document.createElement('option');
@@ -292,29 +293,29 @@ function loadMyIndicators(athleteId) {
       filterSelect.appendChild(option);
     });
 
-    renderIndicatorsList(allMyIndicators, listContainer);
-    drawChart(allMyIndicators);
-    renderStats(allMyIndicators, statsContainer);
+    renderTripMetricsList(allMyTripMetrics, listContainer);
+    drawChart(allMyTripMetrics);
+    renderStats(allMyTripMetrics, statsContainer);
 
     filterSelect.onchange = () => {
       const selected = filterSelect.value;
-      const filtered = selected ? allMyIndicators.filter(i => i.metric === selected) : allMyIndicators;
+      const filtered = selected ? allMyTripMetrics.filter(i => i.metric === selected) : allMyTripMetrics;
 
-      renderIndicatorsList(filtered, listContainer);
+      renderTripMetricsList(filtered, listContainer);
       drawChart(filtered);
       renderStats(filtered, statsContainer);
     };
   });
 }
 
-function renderIndicatorsList(data, container) {
+function renderTripMetricsList(data, container) {
   container.innerHTML = '';
-  data.forEach(ind => {
+  data.forEach(metric => {
     const div = document.createElement('div');
     div.className = 'bg-slate-800 p-4 rounded-2xl flex justify-between';
     div.innerHTML = `
-      <div>${ind.metric} <span class="text-sm text-slate-400">(${ind.date})</span></div>
-      <div class="font-mono">${ind.value} ${ind.unit}</div>
+      <div>${metric.metric} <span class="text-sm text-slate-400">(${metric.date})</span></div>
+      <div class="font-mono">${metric.value} ${metric.unit}</div>
     `;
     container.appendChild(div);
   });
@@ -330,16 +331,12 @@ function renderStats(data, container) {
   const unit = (data[0]?.unit || '').toLowerCase();
   const metricName = (data[0]?.metric || '').toLowerCase();
 
-  // Определяем тип показателя
   const isFuelConsumption = unit.includes('л') || metricName.includes('расход') || metricName.includes('топлив');
-  const isDistance = unit.includes('км') && !isFuelConsumption;
-  const isTime = unit.includes('час') || unit.includes('мин') || unit.includes('сек') || 
-                 metricName.includes('время') || metricName.includes('простой');
+  const isTime = unit.includes('час') || unit.includes('мин') || metricName.includes('время');
 
   let best, avg, progressLabel, progressValue, progressColor;
 
   if (isFuelConsumption || isTime) {
-    // Чем меньше — тем лучше (расход, время)
     best = Math.min(...values);
     avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
     const first = data[0].value;
@@ -347,9 +344,7 @@ function renderStats(data, container) {
     progressValue = ((first - last) / first * 100).toFixed(1);
     progressLabel = progressValue >= 0 ? 'Улучшение' : 'Ухудшение';
     progressColor = progressValue >= 0 ? 'text-emerald-400' : 'text-red-400';
-  } 
-  else {
-    // Чем больше — тем лучше (пробег и т.д.)
+  } else {
     best = Math.max(...values);
     avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
     const first = data[0].value;
@@ -366,17 +361,14 @@ function renderStats(data, container) {
       <div class="text-sm text-slate-400">Лучший результат</div>
       <div class="text-2xl font-semibold mt-1">${best} <span class="text-sm">${data[0]?.unit || ''}</span></div>
     </div>
-    
     <div class="bg-slate-800 p-4 rounded-2xl">
       <div class="text-sm text-slate-400">Средний результат</div>
       <div class="text-2xl font-semibold mt-1">${avg} <span class="text-sm">${data[0]?.unit || ''}</span></div>
     </div>
-    
     <div class="bg-slate-800 p-4 rounded-2xl">
       <div class="text-sm text-slate-400">Последний результат</div>
       <div class="text-2xl font-semibold mt-1">${last} <span class="text-sm">${data[0]?.unit || ''}</span></div>
     </div>
-    
     <div class="bg-slate-800 p-4 rounded-2xl">
       <div class="text-sm text-slate-400">${progressLabel}</div>
       <div class="text-2xl font-semibold mt-1 ${progressColor}">

@@ -1,11 +1,11 @@
 import { db } from "../firebase.js";
 import { ref, get, update } from "firebase/database";
 
-export async function openEditSectionsModal(trainerId) {
+export async function openEditDispatcherRoutesModal(dispatcherId) {
   // Получаем текущие маршруты диспетчера
-  const userRef = ref(db, `users/${trainerId}`);
+  const userRef = ref(db, `users/${dispatcherId}`);
   const snapshot = await get(userRef);
-  let currentSections = snapshot.val()?.sections || [];
+  let currentRoutes = snapshot.val()?.sections || [];
 
   const modal = document.createElement("div");
   modal.className = `fixed inset-0 bg-black/70 flex items-center justify-center z-[999]`;
@@ -14,15 +14,15 @@ export async function openEditSectionsModal(trainerId) {
     <div class="bg-slate-900 rounded-3xl p-8 w-full max-w-md">
       <h3 class="text-2xl font-semibold mb-6">Мои маршруты</h3>
 
-      <!-- Список секций -->
-      <div id="sections-tags" class="flex flex-wrap gap-2 mb-4 min-h-[50px]"></div>
+      <!-- Список маршрутов -->
+      <div id="routes-tags" class="flex flex-wrap gap-2 mb-4 min-h-[50px]"></div>
 
-      <!-- Добавление новой секции -->
+      <!-- Добавление нового маршрута -->
       <div class="flex gap-2 mb-6">
-        <input type="text" id="new-section-input" 
+        <input type="text" id="new-route-input" 
                placeholder="Например: Москва - СПб" 
                class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-2xl text-sm">
-        <button id="add-section-btn" 
+        <button id="add-route-btn" 
                 class="px-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-sm font-medium">
           Добавить
         </button>
@@ -43,24 +43,25 @@ export async function openEditSectionsModal(trainerId) {
 
   document.body.appendChild(modal);
 
-  const tagsContainer = modal.querySelector("#sections-tags");
-  const input = modal.querySelector("#new-section-input");
-  const addBtn = modal.querySelector("#add-section-btn");
+  const tagsContainer = modal.querySelector("#routes-tags");
+  const input = modal.querySelector("#new-route-input");
+  const addBtn = modal.querySelector("#add-route-btn");
   const saveBtn = modal.querySelector("#save-btn");
   const cancelBtn = modal.querySelector("#cancel-btn");
 
-  // Функция отрисовки тегов
+  // Отрисовка тегов маршрутов
   function renderTags() {
     tagsContainer.innerHTML = "";
-    currentSections.forEach((section, index) => {
+
+    currentRoutes.forEach((route, index) => {
       const tag = document.createElement("div");
       tag.className = `flex items-center gap-2 px-4 py-1 bg-slate-700 rounded-full text-sm`;
       tag.innerHTML = `
-        <span>${section}</span>
+        <span>${route}</span>
         <button class="text-red-400 hover:text-red-500 font-bold">×</button>
       `;
       tag.querySelector("button").onclick = () => {
-        currentSections.splice(index, 1);
+        currentRoutes.splice(index, 1);
         renderTags();
       };
       tagsContainer.appendChild(tag);
@@ -69,22 +70,22 @@ export async function openEditSectionsModal(trainerId) {
 
   renderTags();
 
-  // Добавление новой секции
+  // Добавление нового маршрута
   addBtn.onclick = () => {
     const value = input.value.trim();
-    if (value && !currentSections.includes(value)) {
-      currentSections.push(value);
+    if (value && !currentRoutes.includes(value)) {
+      currentRoutes.push(value);
       renderTags();
       input.value = "";
     }
   };
 
-  // Сохранение
+  // Сохранение маршрутов
   saveBtn.onclick = async () => {
     try {
-      await update(ref(db, `users/${trainerId}`), { sections: currentSections });
+      await update(ref(db, `users/${dispatcherId}`), { sections: currentRoutes });
       modal.remove();
-      alert("Маршруты сохранены!");
+      alert("Маршруты успешно сохранены!");
     } catch (error) {
       alert("Ошибка при сохранении: " + error.message);
     }
@@ -92,7 +93,7 @@ export async function openEditSectionsModal(trainerId) {
 
   cancelBtn.onclick = () => modal.remove();
 
-  // Добавление по Enter
+  // Добавление маршрута по нажатию Enter
   input.onkeydown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();

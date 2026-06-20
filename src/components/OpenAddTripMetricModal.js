@@ -1,7 +1,7 @@
 import { ref, push } from "firebase/database";
 import { db } from "../firebase.js";
 
-export function openAddIndicatorModal(driverId, dispatcherId) {
+export function openAddTripMetricModal(driverId, dispatcherId) {
   const modal = document.createElement('div');
   modal.className = `fixed inset-0 bg-black/70 flex items-center justify-center z-[999]`;
 
@@ -71,8 +71,8 @@ export function openAddIndicatorModal(driverId, dispatcherId) {
     e.preventDefault();
 
     const data = {
-      driverId: driverId,
-      dispatcherId: dispatcherId,
+      driverId,
+      dispatcherId,
       date: form.date.value,
       metric: form.metric.value.trim(),
       value: parseFloat(form.value.value),
@@ -82,9 +82,9 @@ export function openAddIndicatorModal(driverId, dispatcherId) {
     };
 
     try {
-      await push(ref(db, 'performanceIndicators'), data);
+      await push(ref(db, 'tripMetrics'), data);
       modal.remove();
-      alert("Показатель успешно добавлен!");
+      alert("Показатель рейса успешно добавлен!");
     } catch (error) {
       alert("Ошибка при сохранении: " + error.message);
     }
